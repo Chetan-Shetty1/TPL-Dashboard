@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TPL Config — Admin Only</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Nunito+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --red:#E8282A;--red-l:#FEE8E8;--red-d:#B51E20;
+  --gold:#F5A623;--gold-l:#FFF3DC;--gold-d:#C27D0A;
+  --green:#1D8348;--green-l:#E6F4ED;--green-d:#145A32;
+  --blue:#1565C0;--blue-l:#E3F0FF;
+  --gray-l:#F4F2EE;--gray-b:#DEE2E6;
+  --white:#fff;--bg:#F2EFE9;
+  --text:#1A1A2E;--text-s:#5A5A72;--text-xs:#9090A8;
+  --radius:12px;--radius-sm:8px;--shadow:0 2px 16px rgba(0,0,0,.08);
+  --font:'Nunito',sans-serif;--font-b:'Nunito Sans',sans-serif;
+}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;font-size:14px}
+
+/* HEADER */
+.header{background:linear-gradient(135deg,#E8282A,#B51E20);padding:20px 32px;display:flex;align-items:center;gap:16px;box-shadow:0 4px 20px rgba(232,40,42,.3)}
+.header-logo{font-size:22px;font-weight:900;color:#fff;letter-spacing:-.5px}
+.header-logo span{color:var(--gold)}
+.header-badge{background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.25);border-radius:20px;padding:4px 14px;font-size:11px;font-weight:800;color:#fff;letter-spacing:.5px;font-family:var(--font-b)}
+.header-right{margin-left:auto;font-size:12px;color:rgba(255,255,255,.7);font-family:var(--font-b)}
+
+/* CONTENT */
+.content{max-width:1000px;margin:0 auto;padding:28px 24px;display:flex;flex-direction:column;gap:20px}
+
+/* CARDS */
+.card{background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}
+.card-header{padding:16px 20px;border-bottom:1px solid var(--gray-b);display:flex;align-items:center;gap:10px}
+.card-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.card-title{font-size:15px;font-weight:900;color:var(--text)}
+.card-sub{font-size:11px;color:var(--text-s);font-family:var(--font-b);margin-top:1px}
+.card-body{padding:20px}
+
+/* FORM ELEMENTS */
+.inp{padding:8px 12px;border:1.5px solid var(--gray-b);border-radius:var(--radius-sm);font-family:var(--font);font-size:13px;font-weight:600;color:var(--text);background:var(--white);outline:none;transition:border-color .2s;width:100%}
+.inp:focus{border-color:var(--red)}
+.inp-sm{width:80px;text-align:center;font-weight:800}
+.btn{padding:10px 20px;border:none;border-radius:var(--radius-sm);font-family:var(--font);font-size:13px;font-weight:800;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:all .2s}
+.btn-red{background:var(--red);color:#fff}.btn-red:hover{background:var(--red-d)}
+.btn-green{background:var(--green);color:#fff}.btn-green:hover{background:var(--green-d)}
+.btn-sm{padding:6px 14px;font-size:12px}
+.btn-outline{background:none;border:1.5px solid var(--gray-b);color:var(--text)}.btn-outline:hover{border-color:var(--red);color:var(--red)}
+
+/* ROM EDITOR */
+.rom-grid{display:flex;flex-direction:column;gap:0}
+.rom-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--gray-b)}
+.rom-row:last-child{border-bottom:none}
+.rom-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.rom-name{font-size:13px;font-weight:800;flex:1}
+.rom-stores-lbl{font-size:11px;color:var(--text-xs);font-family:var(--font-b);white-space:nowrap}
+
+/* EXCLUDED DAYS */
+.exc-list{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;min-height:20px}
+.exc-tag{display:inline-flex;align-items:center;gap:6px;background:var(--gold-l);color:var(--gold-d);border-radius:20px;padding:5px 12px;font-size:12px;font-weight:800;font-family:var(--font-b);border:1px solid #F5A62340}
+.exc-tag button{border:none;background:none;color:var(--gold-d);cursor:pointer;font-size:16px;line-height:1;padding:0;margin-left:2px}
+.exc-add-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+
+/* UPLOAD */
+.upload-zone{border:2.5px dashed var(--gray-b);border-radius:var(--radius);padding:28px;text-align:center;cursor:pointer;transition:all .2s;position:relative;background:var(--gray-l)}
+.upload-zone:hover{border-color:var(--red);background:var(--red-l)}
+.upload-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.upload-icon{font-size:36px;margin-bottom:10px}
+.upload-title{font-size:15px;font-weight:800;color:var(--text);margin-bottom:4px}
+.upload-sub{font-size:12px;color:var(--text-s);font-family:var(--font-b)}
+.upload-log{margin-top:12px;padding:10px 14px;border-radius:var(--radius-sm);font-size:12px;font-family:var(--font-b);display:none}
+.upload-log.ok{background:var(--green-l);color:var(--green-d)}
+.upload-log.err{background:var(--red-l);color:var(--red-d)}
+
+/* STATUS BAR */
+.status-bar{background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px 20px;display:flex;align-items:center;gap:20px;font-size:12px;font-family:var(--font-b)}
+.status-item{display:flex;align-items:center;gap:6px;color:var(--text-s)}
+.status-item strong{color:var(--text);font-weight:800}
+.status-dot{width:8px;height:8px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.save-notice{margin-left:auto;font-size:11px;color:var(--text-xs)}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;right:24px;background:#1A1A2E;color:#fff;border-radius:var(--radius-sm);padding:12px 18px;font-size:13px;font-weight:700;font-family:var(--font);display:none;align-items:center;gap:8px;box-shadow:0 8px 24px rgba(0,0,0,.2);z-index:999;animation:slideUp .3s ease}
+.toast.show{display:flex}
+@keyframes slideUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+/* TWO-COL */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+@media(max-width:700px){.two-col{grid-template-columns:1fr}}
+@media(max-width:780px){.upload-two-col{grid-template-columns:1fr!important}}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-logo">🧸 <span>TPL</span> Admin</div>
+  <div class="header-badge">🔒 ADMIN ONLY</div>
+  <div class="header-right">tpl_config.html · Keep this file private</div>
+</div>
+
+<div class="content">
+
+  <!-- STATUS BAR -->
+  <div class="status-bar">
+    <div class="status-item"><div class="status-dot"></div>Config saved to browser storage</div>
+    <div class="status-item">Total stores: <strong id="total-stores-lbl">—</strong></div>
+    <div class="status-item">Excluded days: <strong id="exc-count-lbl">0</strong></div>
+    <div class="status-item">Week: <strong>18–21 May 2026</strong></div>
+    <div class="save-notice">Changes apply to the dashboard instantly via shared browser storage</div>
+  </div>
+
+  <div class="two-col">
+
+    <!-- ROM STORE COUNTS -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon" style="background:#FEE8E8">👥</div>
+        <div>
+          <div class="card-title">ROM Store Counts</div>
+          <div class="card-sub">Change the compliance denominator per ROM</div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="rom-grid" id="rom-editor"></div>
+        <div style="margin-top:16px;display:flex;gap:10px">
+          <button class="btn btn-red" onclick="saveRomCounts()">💾 Save Counts</button>
+          <button class="btn btn-outline" onclick="resetRomCounts()">↩ Reset to Default</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- EXCLUDED DAYS -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon" style="background:#FFF3DC">🗓️</div>
+        <div>
+          <div class="card-title">Exclude TPL Days</div>
+          <div class="card-sub">Holidays, big sale days, or any day not to count</div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="exc-list" id="exc-list">
+          <span style="font-size:12px;color:var(--text-xs);font-family:var(--font-b);padding:4px 0">No excluded days</span>
+        </div>
+        <div class="exc-add-row">
+          <input type="date" id="exc-date" class="inp" style="width:150px">
+          <input type="text" id="exc-reason" class="inp" placeholder="Reason (e.g. Diwali)" style="flex:1">
+          <button class="btn btn-red btn-sm" onclick="addExcDay()">+ Add</button>
+        </div>
+        <div style="margin-top:10px;font-size:11px;color:var(--text-xs);font-family:var(--font-b);line-height:1.6">
+          Excluded days are removed from weekly &amp; monthly denominators. The dashboard will show 🎉 for those cells.
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- UPLOADS: two side by side -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+
+    <!-- DAILY DATA UPLOAD -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon" style="background:#E3F0FF">📤</div>
+        <div>
+          <div class="card-title">Upload Daily Entries</div>
+          <div class="card-sub">MS Forms Excel export — one file per day or cumulative</div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="upload-zone" id="daily-upload-zone">
+          <input type="file" accept=".xlsx,.xls" onchange="handleDailyUpload(this)">
+          <div class="upload-icon">📋</div>
+          <div class="upload-title">Drag &amp; drop MS Forms export</div>
+          <div class="upload-sub">Accepts .xlsx · Duplicates auto-removed</div>
+        </div>
+        <div class="upload-log" id="daily-upload-log"></div>
+        <div style="margin-top:14px;background:var(--gray-l);border-radius:var(--radius-sm);padding:12px 14px;font-size:11px;color:var(--text-s);font-family:var(--font-b);line-height:1.8">
+          <strong style="color:var(--text);display:block;margin-bottom:3px">Upload rules</strong>
+          Same store + same day = 1 entry (deduped automatically)<br>
+          Late entries OK — Monday form on Tuesday still counts for Monday<br>
+          Upload daily (next morning) or cumulative weekly
+        </div>
+      </div>
+    </div>
+
+    <!-- BASE DATA UPLOAD -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon" style="background:#E6F4ED">🏬</div>
+        <div>
+          <div class="card-title">Upload Base Store Data</div>
+          <div class="card-sub">Master list of stores &amp; ROM mapping — updates denominators</div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="upload-zone" id="base-upload-zone">
+          <input type="file" accept=".xlsx,.xls" onchange="handleBaseUpload(this)">
+          <div class="upload-icon">🏬</div>
+          <div class="upload-title">Drag &amp; drop store master file</div>
+          <div class="upload-sub">Accepts .xlsx · 3 columns required</div>
+        </div>
+        <div class="upload-log" id="base-upload-log"></div>
+
+        <!-- Preview table (shown after upload) -->
+        <div id="base-preview" style="display:none;margin-top:14px">
+          <div style="font-size:12px;font-weight:800;color:var(--text);margin-bottom:8px">Preview — ROM store counts from file</div>
+          <table style="width:100%;border-collapse:collapse;font-size:12px" id="base-preview-table">
+            <thead><tr>
+              <th style="text-align:left;padding:7px 10px;background:var(--gray-l);border-bottom:2px solid var(--gray-b);font-size:10px;font-weight:800;color:var(--text-xs);letter-spacing:.5px;text-transform:uppercase">ROM</th>
+              <th style="text-align:center;padding:7px 10px;background:var(--gray-l);border-bottom:2px solid var(--gray-b);font-size:10px;font-weight:800;color:var(--text-xs);letter-spacing:.5px;text-transform:uppercase">Stores found</th>
+              <th style="text-align:center;padding:7px 10px;background:var(--gray-l);border-bottom:2px solid var(--gray-b);font-size:10px;font-weight:800;color:var(--text-xs);letter-spacing:.5px;text-transform:uppercase">Change</th>
+            </tr></thead>
+            <tbody id="base-preview-body"></tbody>
+          </table>
+          <div style="display:flex;gap:10px;margin-top:12px">
+            <button class="btn btn-green" onclick="applyBaseData()">✅ Apply &amp; Save</button>
+            <button class="btn btn-outline" onclick="discardBaseData()">✗ Discard</button>
+          </div>
+        </div>
+
+        <div style="margin-top:14px;background:var(--gray-l);border-radius:var(--radius-sm);padding:12px 14px;font-size:11px;color:var(--text-s);font-family:var(--font-b);line-height:1.8">
+          <strong style="color:var(--text);display:block;margin-bottom:3px">Required columns (row 1 = header)</strong>
+          <span style="font-family:monospace;background:var(--white);border:1px solid var(--gray-b);border-radius:4px;padding:2px 6px;font-size:11px">Store Name</span>
+          &nbsp;
+          <span style="font-family:monospace;background:var(--white);border:1px solid var(--gray-b);border-radius:4px;padding:2px 6px;font-size:11px">Store Code</span>
+          &nbsp;
+          <span style="font-family:monospace;background:var(--white);border:1px solid var(--gray-b);border-radius:4px;padding:2px 6px;font-size:11px">ROM Name</span><br>
+          Column order doesn't matter — headers are matched by name.<br>
+          Uploading a new file <strong>replaces</strong> the current base data entirely.
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- HOW TO USE -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon" style="background:#E6F4ED">📖</div>
+      <div>
+        <div class="card-title">How to use these two files</div>
+        <div class="card-sub">Quick reference for admins</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+        <div style="background:var(--red-l);border-radius:var(--radius-sm);padding:14px;border-left:4px solid var(--red)">
+          <div style="font-size:13px;font-weight:900;color:var(--red-d);margin-bottom:6px">📊 tpl_dashboard.html</div>
+          <div style="font-size:12px;color:var(--text-s);font-family:var(--font-b);line-height:1.7">Share this file (or its hosted link) with ROMs, your team, leadership. View-only — no settings, no config. Reads changes you make here automatically.</div>
+        </div>
+        <div style="background:var(--blue-l);border-radius:var(--radius-sm);padding:14px;border-left:4px solid var(--blue)">
+          <div style="font-size:13px;font-weight:900;color:var(--blue);margin-bottom:6px">⚙️ tpl_config.html</div>
+          <div style="font-size:12px;color:var(--text-s);font-family:var(--font-b);line-height:1.7">Keep this file private. Use it to update ROM store counts, exclude holidays, and upload new data. Changes save automatically and reflect in the dashboard.</div>
+        </div>
+      </div>
+      <div style="margin-top:14px;padding:12px 14px;background:var(--gold-l);border-radius:var(--radius-sm);font-size:12px;color:var(--gold-d);font-family:var(--font-b);font-weight:700">
+        ⚠️ Both files must be opened in the same browser on the same device for live sync to work (via browser localStorage). For cloud hosting, we'll connect them via a shared data file instead.
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const ROMS=["Shirish Mastud","Lalit Mohan","Chetan Chaudhari","Ashlin Moses","Divya Lakshmi","Ajay Gill"];
+const ROM_COLORS={"Shirish Mastud":"#E8282A","Lalit Mohan":"#F5A623","Chetan Chaudhari":"#1D8348","Ashlin Moses":"#1565C0","Divya Lakshmi":"#7B1FA2","Ajay Gill":"#E67E22"};
+const DEFAULT_TOTALS={"Shirish Mastud":32,"Lalit Mohan":19,"Chetan Chaudhari":18,"Ashlin Moses":25,"Divya Lakshmi":14,"Ajay Gill":21};
+
+function loadConfig(){
+  try{ const s=localStorage.getItem('tpl_config'); if(s) return JSON.parse(s); }catch(e){}
+  return {romTotals:{...DEFAULT_TOTALS},excludedDays:[]};
+}
+function saveConfig(cfg){
+  localStorage.setItem('tpl_config',JSON.stringify(cfg));
+}
+function getConfig(){ return loadConfig(); }
+
+let cfg = loadConfig();
+
+function buildRomEditor(){
+  document.getElementById('rom-editor').innerHTML=ROMS.map(rom=>`
+    <div class="rom-row">
+      <div class="rom-dot" style="background:${ROM_COLORS[rom]}"></div>
+      <div class="rom-name">${rom}</div>
+      <input type="number" class="inp inp-sm" id="ri_${rom.replace(/\s/g,'_')}" value="${cfg.romTotals[rom]||DEFAULT_TOTALS[rom]}" min="1" max="300">
+      <span class="rom-stores-lbl">stores</span>
+    </div>
+  `).join('');
+  updateStatusBar();
+}
+
+function saveRomCounts(){
+  ROMS.forEach(rom=>{
+    const el=document.getElementById('ri_'+rom.replace(/\s/g,'_'));
+    if(el) cfg.romTotals[rom]=parseInt(el.value)||cfg.romTotals[rom];
+  });
+  saveConfig(cfg);
+  updateStatusBar();
+  showToast('✅ Store counts saved — dashboard updated');
+}
+
+function resetRomCounts(){
+  cfg.romTotals={...DEFAULT_TOTALS};
+  saveConfig(cfg);
+  buildRomEditor();
+  showToast('↩ ROM counts reset to defaults');
+}
+
+function renderExcList(){
+  const el=document.getElementById('exc-list');
+  if(!cfg.excludedDays.length){
+    el.innerHTML='<span style="font-size:12px;color:var(--text-xs);font-family:var(--font-b);padding:4px 0">No excluded days yet</span>';
+  } else {
+    el.innerHTML=cfg.excludedDays.map((e,i)=>
+      `<span class="exc-tag">${e.date} — ${e.reason}<button onclick="removeExc(${i})">×</button></span>`
+    ).join('');
+  }
+  updateStatusBar();
+}
+
+function addExcDay(){
+  const date=document.getElementById('exc-date').value;
+  const reason=document.getElementById('exc-reason').value.trim()||'Holiday';
+  if(!date){ showToast('⚠️ Please select a date','err'); return; }
+  if(cfg.excludedDays.some(e=>e.date===date)){ showToast('⚠️ That date is already excluded','err'); return; }
+  cfg.excludedDays.push({date,reason});
+  saveConfig(cfg);
+  document.getElementById('exc-date').value='';
+  document.getElementById('exc-reason').value='';
+  renderExcList();
+  showToast(`🎉 ${date} excluded — ${reason}`);
+}
+
+function removeExc(i){
+  const removed=cfg.excludedDays[i];
+  cfg.excludedDays.splice(i,1);
+  saveConfig(cfg);
+  renderExcList();
+  showToast(`↩ ${removed.date} restored`);
+}
+
+// ── DAILY ENTRIES UPLOAD ──
+function handleDailyUpload(inp){
+  const f = inp.files[0];
+  if(!f) return;
+  const log = document.getElementById('daily-upload-log');
+  log.className = 'upload-log ok';
+  log.style.display = 'block';
+  log.innerHTML = `✅ <strong>"${f.name}"</strong> received (${(f.size/1024).toFixed(1)} KB)<br>
+    Deduplication and compliance recalculation will run automatically in the hosted version.<br>
+    For now, replace your data source file and refresh the dashboard.`;
+  showToast('📋 Daily entries file received');
+  inp.value = '';
+}
+
+// ── BASE STORE DATA UPLOAD ──
+let pendingBaseData = null; // holds parsed ROM→count map before user confirms
+
+function handleBaseUpload(inp){
+  const f = inp.files[0];
+  if(!f) return;
+  const log = document.getElementById('base-upload-log');
+
+  const reader = new FileReader();
+  reader.onload = function(e){
+    try {
+      const data = new Uint8Array(e.target.result);
+      const wb = XLSX.read(data, {type:'array'});
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(ws, {defval:''});
+
+      if(!rows.length){ throw new Error('File appears to be empty'); }
+
+      // Find column headers case-insensitively
+      const firstRow = rows[0];
+      const keys = Object.keys(firstRow);
+      const findCol = (target) => keys.find(k => k.trim().toLowerCase() === target.toLowerCase()) || null;
+      const colStoreName = findCol('Store Name');
+      const colStoreCode = findCol('Store Code');
+      const colROM       = findCol('ROM Name');
+
+      const missing = ['Store Name','Store Code','ROM Name'].filter((_,i) => ![colStoreName,colStoreCode,colROM][i]);
+      if(missing.length){ throw new Error(`Missing column${missing.length>1?'s':''}: ${missing.join(', ')}`); }
+
+      // Count stores per ROM and collect store list
+      const romCounts = {};
+      const storesByRom = {};
+      let totalRows = 0;
+      rows.forEach(row => {
+        const rom  = String(row[colROM]||'').trim();
+        const name = String(row[colStoreName]||'').trim();
+        const code = String(row[colStoreCode]||'').trim();
+        if(!rom || !name || !code) return; // skip blank rows
+        totalRows++;
+        romCounts[rom] = (romCounts[rom]||0) + 1;
+        if(!storesByRom[rom]) storesByRom[rom] = [];
+        storesByRom[rom].push({name, code});
+      });
+
+      if(!totalRows){ throw new Error('No valid data rows found — check column names'); }
+
+      pendingBaseData = {romCounts, storesByRom, fileName: f.name, totalRows};
+
+      // Show preview
+      const romColors = {"Shirish Mastud":"#E8282A","Lalit Mohan":"#F5A623","Chetan Chaudhari":"#1D8348","Ashlin Moses":"#1565C0","Divya Lakshmi":"#7B1FA2","Ajay Gill":"#E67E22"};
+      const tbody = document.getElementById('base-preview-body');
+      tbody.innerHTML = Object.entries(romCounts).sort((a,b)=>a[0].localeCompare(b[0])).map(([rom,count])=>{
+        const current = cfg.romTotals[rom];
+        const dot = romColors[rom] ? `<span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:${romColors[rom]};margin-right:6px;vertical-align:middle"></span>` : '';
+        let change = '';
+        if(current === undefined){
+          change = `<span style="color:#7B1FA2;font-weight:800">New ROM</span>`;
+        } else if(count > current){
+          change = `<span style="color:#1D8348;font-weight:800">+${count-current} ▲</span>`;
+        } else if(count < current){
+          change = `<span style="color:#E8282A;font-weight:800">${count-current} ▼</span>`;
+        } else {
+          change = `<span style="color:#9090A8;font-weight:700">No change</span>`;
+        }
+        return `<tr>
+          <td style="padding:8px 10px;border-bottom:1px solid var(--gray-b)">${dot}${rom}</td>
+          <td style="padding:8px 10px;border-bottom:1px solid var(--gray-b);text-align:center;font-weight:800">${count}</td>
+          <td style="padding:8px 10px;border-bottom:1px solid var(--gray-b);text-align:center">${change}</td>
+        </tr>`;
+      }).join('');
+
+      document.getElementById('base-preview').style.display = 'block';
+
+      log.className = 'upload-log ok';
+      log.style.display = 'block';
+      log.innerHTML = `✅ <strong>"${f.name}"</strong> parsed — ${totalRows} stores across ${Object.keys(romCounts).length} ROMs found. Review the preview below and click Apply to save.`;
+      showToast(`🏬 ${totalRows} stores parsed — review and apply`);
+
+    } catch(err) {
+      log.className = 'upload-log err';
+      log.style.display = 'block';
+      log.innerHTML = `❌ <strong>Error reading file:</strong> ${err.message}`;
+      showToast('❌ Could not parse file — check column names', 'err');
+      pendingBaseData = null;
+      document.getElementById('base-preview').style.display = 'none';
+    }
+  };
+  reader.readAsArrayBuffer(f);
+  inp.value = '';
+}
+
+function applyBaseData(){
+  if(!pendingBaseData) return;
+  // Update ROM totals from parsed data
+  Object.entries(pendingBaseData.romCounts).forEach(([rom, count]) => {
+    cfg.romTotals[rom] = count;
+  });
+  saveConfig(cfg);
+  buildRomEditor();
+  updateStatusBar();
+  document.getElementById('base-preview').style.display = 'none';
+  document.getElementById('base-upload-log').innerHTML = `✅ Base data applied — ${pendingBaseData.totalRows} stores across ${Object.keys(pendingBaseData.romCounts).length} ROMs. ROM store counts updated.`;
+  pendingBaseData = null;
+  showToast('✅ Base data saved — dashboard denominators updated');
+}
+
+function discardBaseData(){
+  pendingBaseData = null;
+  document.getElementById('base-preview').style.display = 'none';
+  document.getElementById('base-upload-log').style.display = 'none';
+  showToast('↩ Base data discarded — no changes made');
+}
+
+function updateStatusBar(){
+  const total=Object.values(cfg.romTotals).reduce((a,b)=>a+b,0);
+  document.getElementById('total-stores-lbl').textContent=total;
+  document.getElementById('exc-count-lbl').textContent=cfg.excludedDays.length;
+}
+
+function showToast(msg, type){
+  const t=document.getElementById('toast');
+  t.textContent=msg;
+  t.style.background=type==='err'?'#B51E20':'#1A1A2E';
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),3000);
+}
+
+// Init
+buildRomEditor();
+renderExcList();
+</script>
+</body>
+</html>
